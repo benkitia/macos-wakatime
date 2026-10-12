@@ -271,24 +271,24 @@ extension AXUIElement {
         return search(element: rootElement, pattern: pattern)
     }
 
-    // Finds the first text area element whose value looks like a URL. Note that Chrome
-    // cuts off the URL scheme, so this only scans for a domain with an optional path.
-    func findAddressField() -> AXUIElement? {
-        firstDescendantWhere { descendant in
-            if descendant.role == kAXTextFieldRole, let value = descendant.value {
-                let pattern = "(([^:\\/\\s]+)\\.([^:\\/\\s\\.]+))(\\/\\w+)*(\\/([\\w\\-\\.]+[^#?\\s]+))?(.*)?(#[\\w\\-]+)?$"
-                do {
-                    let regex = try NSRegularExpression(pattern: pattern)
-                    let range = NSRange(value.startIndex..<value.endIndex, in: value)
-                    let matches = regex.numberOfMatches(in: value, options: [], range: range)
-                    return matches > 0
-                } catch {
-                    // print("Regex error: \(error.localizedDescription)")
-                    return false
-                }
+    // Finds the browser address field by identifier or a URL-like value.
+    // Chrome omits the URL scheme, so this matches a domain with an optional path.
+    func findAddressField(identifier: String? = nil) -> AXUIElement? {
+        // The pruning callback runs after the predicate; reuse its role check.
+        var isWebArea = false
+        return firstDescendantWhere({ descendant in
+            let role = descendant.role
+            isWebArea = role == "AXWebArea"
+            if isWebArea { return false }
+            if let identifier {
+                return descendant.id == identifier
             }
-            return  false
-        }
+            if role == kAXTextFieldRole, let value = descendant.value {
+                let pattern = "(([^:\\/\\s]+)\\.([^:\\/\\s\\.]+))(\\/\\w+)*(\\/([\\w\\-\\.]+[^#?\\s]+))?(.*)?(#[\\w\\-]+)?$"
+                return value.matchesRegex(pattern)
+            }
+            return false
+        }, skipDescendantsWhere: { _ in isWebArea })
     }
 
     func elementAtPosition(x: Float, y: Float) -> AXUIElement? {

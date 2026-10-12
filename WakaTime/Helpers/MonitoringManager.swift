@@ -525,11 +525,8 @@ class MonitoringManager {
                 let projectLabel = element.firstDescendantWhere { $0.value == "Project" }
                 let projectButton = projectLabel?.nextSibling?.firstDescendantWhere { $0.role == kAXButtonRole }
                 return projectButton?.rawTitle
-            case .safari:
-                let addressField = element.elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
-                address = addressField?.value
-            case .safaripreview:
-                let addressField = element.elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
+            case .safari, .safaripreview:
+                let addressField = element.findAddressField(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
                 address = addressField?.value
             default: return nil
         }
